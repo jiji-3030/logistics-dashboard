@@ -9,15 +9,11 @@ use App\Models\ProximityLog;
 class ProximityAlertController extends Controller
 {
     // Show the map and logs
-    public function map()
-    {
-        $logs = ProximityLog::latest()->take(50)->get();
-
-        return view('dashboard.map', [
-            'logs' => $logs,
-            'data' => session('data') // fetch flash data from redirect
-        ]);
-    }
+    public function showMap()
+{
+    $logs = ProximityLog::orderBy('created_at', 'asc')->get();
+    return view('dashboard.map', ['logs' => $logs, 'data' => null]);
+}
 
     // Handle the POST request
     public function checkProximity(Request $request)
@@ -63,13 +59,12 @@ class ProximityAlertController extends Controller
             ]);
         }
 
-        return redirect()->route('dashboard.map')->with('data', $data);
+        $logs = ProximityLog::orderBy('created_at', 'asc')->get();
+        return view('dashboard.map', ['logs' => $logs, 'data' => $data]);
     }
-    public function destroy($id)
-    {
-        $log = ProximityLog::findOrFail($id);
-        $log->delete();
-
-        return redirect()->route('dashboard.map')->with('success', 'Log deleted successfully.');
-    }
+    public function delete($id)
+{
+    ProximityLog::findOrFail($id)->delete();
+    return redirect()->back();
+}
 }
