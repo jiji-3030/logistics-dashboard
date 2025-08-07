@@ -74,8 +74,7 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Proximity Logs</h2>
                 <div id="resultBanner" class="mb-4"></div>
                 @foreach ($logs->reverse()->values() as $log)
-                    <div
-                        class="flex justify-between items-center bg-gray-100 dark:bg-gray-700 p-3 rounded mb-3 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+                    <div id="log-entry-{{ $log->id }}" class="flex justify-between items-center items-center bg-gray-100 dark:bg-gray-700 p-3 rounded mb-3 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
                         onclick="focusMarker({{ $log->lat }}, {{ $log->lng }}, {{ $log->distance }}, {{ $log->within_range ? 'true' : 'false' }})"
                     >
                         <div>
@@ -121,18 +120,34 @@
 
     const warehouse = L.marker([14.6020, 120.9875], {
         icon: new L.Icon({ iconUrl: 'https://img.icons8.com/?size=100&id=59830&format=png&color=808080', iconSize: [30, 30] })
-    }).addTo(map).bindPopup("Warehouse");
+    }).addTo(map).bindPopup("🏢 Warehouse");
 
     const greenIcon = new L.Icon({ iconUrl: 'https://img.icons8.com/?size=100&id=59830&format=png&color=2e6f40', iconSize: [30, 30] });
     const redIcon = new L.Icon({ iconUrl: 'https://img.icons8.com/?size=100&id=59830&format=png&color=8B0000', iconSize: [30, 30] });
 
     const logs = @json($logs);
     logs.forEach(log => {
-        const icon = log.within_range ? greenIcon : redIcon;
-        const marker = L.marker([log.lat, log.lng], { icon }).addTo(map);
-        marker.on('click', () => {
-            focusMarker(log.lat, log.lng, log.distance, log.within_range);
-            animateMarker(marker);
+    const icon = log.within_range ? greenIcon : redIcon;
+    const marker = L.marker([log.lat, log.lng], { icon }).addTo(map);
+
+    // Calculate time estimates
+    const walk = Math.ceil(log.distance / 1.4 / 60);
+    const drive = Math.ceil(log.distance / 13.9 / 60);
+
+    // Bind popup
+    const popupContent = `
+        <strong>${log.distance} meters away</strong><br>
+        🚶‍♂️ ${walk} mins walk<br>
+        🚚 ${drive} mins drive
+    `;
+    marker.bindPopup(popupContent);
+
+    // On click
+    marker.on('click', () => {
+        focusMarker(log.lat, log.lng, log.distance, log.within_range);
+        animateMarker(marker);
+        marker.openPopup();
+        highlightLog(log.id);
         });
     });
 
@@ -153,3 +168,4 @@
 
 </body>
 </html>
+
